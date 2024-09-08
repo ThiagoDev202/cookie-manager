@@ -1,0 +1,151 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Gerenciador de Cookies LGPD</title>
+  <style>
+    #cookie-consent-banner {
+      position: fixed;
+      bottom: 0;
+      left: 0;
+      width: 100%;
+      background-color: #f8f9fa;
+      padding: 20px;
+      box-shadow: 0 -2px 5px rgba(0, 0, 0, 0.1);
+      z-index: 1000;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      font-family: Arial, sans-serif;
+    }
+
+    #cookie-consent-banner p {
+      margin: 0;
+      font-size: 14px;
+    }
+
+    .cookie-options {
+      display: flex;
+      gap: 15px;
+    }
+
+    .cookie-options label {
+      font-size: 12px;
+    }
+
+    .cookie-buttons {
+      display: flex;
+      gap: 10px;
+    }
+
+    .cookie-buttons button {
+      padding: 5px 10px;
+      font-size: 12px;
+      cursor: pointer;
+    }
+
+    .cookie-info {
+      font-size: 10px;
+      margin-top: 5px;
+    }
+
+    .cookie-info a {
+      color: blue;
+      text-decoration: underline;
+      cursor: pointer;
+    }
+  </style>
+</head>
+<body>
+
+  <div id="cookie-consent-banner">
+    <div>
+      <p>Este site usa cookies para garantir a melhor experiência. Selecione suas preferências:</p>
+      <div class="cookie-options">
+        <label><input type="checkbox" id="functional-cookies" checked> Cookies Funcionais</label>
+        <label><input type="checkbox" id="analytics-cookies" checked> Cookies Analíticos</label>
+        <label><input type="checkbox" id="ads-cookies" checked> Cookies de Publicidade</label>
+      </div>
+      <div class="cookie-info">
+        <p>Leia mais em nossa <a href="#">Política de Privacidade</a>.</p>
+      </div>
+    </div>
+    <div class="cookie-buttons">
+      <button id="accept-all">Aceitar Todos</button>
+      <button id="save-preferences">Salvar Preferências</button>
+    </div>
+  </div>
+
+  <!-- Inicializar Firebase e Firestore -->
+  <script type="module">
+    // Importações do Firebase
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-app.js";
+    import { getFirestore, collection, addDoc } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore.js";
+
+    // Configuração Firebase
+    const firebaseConfig = {
+      apiKey: "YOUR_API_KEY",
+      authDomain: "YOUR_PROJECT_ID.firebaseapp.com",
+      projectId: "YOUR_PROJECT_ID",
+      storageBucket: "YOUR_PROJECT_ID.appspot.com",
+      messagingSenderId: "YOUR_MESSAGING_SENDER_ID",
+      appId: "YOUR_APP_ID"
+    };
+
+    // Inicializar Firebase e Firestore
+    const app = initializeApp(firebaseConfig);
+    const db = getFirestore(app);
+
+    // Função para gerar um ID único de 16 caracteres
+    function generateUniqueId() {
+      return Math.random().toString(36).substr(2, 16);
+    }
+
+    // Função para salvar consentimento no Firestore
+    async function saveConsent(consentData) {
+      try {
+        const docRef = await addDoc(collection(db, "consents"), consentData);
+        console.log("Consentimento salvo com ID: ", docRef.id);
+        hideCookieBanner(); // Chama a função para esconder o banner
+      } catch (error) {
+        console.error("Erro ao salvar consentimento: ", error.message);
+        console.error("Detalhes do erro: ", error);
+      }
+    }
+
+    // Função para ocultar o banner de cookies
+    function hideCookieBanner() {
+      document.getElementById("cookie-consent-banner").style.display = "none";
+    }
+
+    // Função para lidar com consentimento
+    function handleCookieConsent(acceptAll = false) {
+      const userId = generateUniqueId();
+      const consentData = {
+        userId: userId,
+        essential: true, // Sempre ativado
+        functional: acceptAll || document.getElementById("functional-cookies").checked,
+        analytics: acceptAll || document.getElementById("analytics-cookies").checked,
+        ads: acceptAll || document.getElementById("ads-cookies").checked,
+        consentTimestamp: new Date().toISOString(), // Data e hora do consentimento
+        consentVersion: "1.0", // Versão da política de consentimento
+        userAgent: navigator.userAgent // Informações do navegador e dispositivo
+      };
+
+      saveConsent(consentData);
+    }
+
+    // Aceitar todos os cookies
+    document.getElementById("accept-all").addEventListener("click", () => {
+      handleCookieConsent(true); // Aceita todos os cookies e salva no Firestore
+    });
+
+    // Salvar preferências do usuário
+    document.getElementById("save-preferences").addEventListener("click", () => {
+      handleCookieConsent(false); // Salva as preferências selecionadas pelo usuário
+    });
+  </script>
+
+</body>
+</html>
